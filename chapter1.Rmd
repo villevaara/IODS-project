@@ -1,13 +1,16 @@
 
-# About the project
+# Course diary entry #1
 
-*Write a short description about the course and add a link to your GitHub repository here. This is an R Markdown (.Rmd) file so you should use R Markdown syntax.*
+I've been using R and data analysis tools for a while already, but I like so many digital humanists, haven't studied these specific toosl formally. This course seems like a good place to learn about the tools and methods in a more structured way, and the course programme looks very promising.
 
-```{r}
-# This is a so-called "R chunk" where you can write R code.
+## Reflections of Exercise Set 1
 
-date()
+I'm familiar with the basic structures of R ,so this was pretty smooth sailing. I've encountered some of the  tidyverse stuff before, but haven't really studied it. This introduction to it was quite enlightening, and I now have a sighnificantly better understanding of th tidyverse structures. I can see the merits of the pipe (`%>%`) operator: It makes following the workflow steps very easy.
 
-```
-The text continues here.
+[`tibble()`](https://tibble.tidyverse.org/) was a new structure to me too, and that's going to be useful too. The promise of stricter adherence to input variable types and less unhelpful "help" when compared to dataframes sounds like a way to avoid a lot headaches.
 
+The [R for Health Data Science](https://argoshare.is.ed.ac.uk/healthyr_book/) was very easy to follow, and is well structured. I'm pretty sure I'm goinmg to use it as an R reference in the future, it is a lot clearer than much of the official R documentation.
+
+## Personal project github repo
+
+My github repo for the course is here: [https://github.com/villevaara/IODS-project](https://github.com/villevaara/IODS-project)
