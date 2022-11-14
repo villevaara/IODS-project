@@ -1,13 +1,73 @@
-# Insert chapter 2 title here
+# Week 2 exercises
 
-*Describe the work you have done this week and summarize your learning.*
-
-- Describe your work and results clearly. 
-- Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods.
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using.
+*Read the students2014 data into R either from your local folder (if you completed the Data wrangling part) or from this url: https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/learning2014.txt . (The separator is a comma "," and the file includes a header). Explore the structure and the dimensions of the data and describe the dataset briefly, assuming the reader has no previous knowledge of it. There is information related to the data here. (0-2 points)*
 
 ```{r}
-date()
+library(readr)
+learning2014 <- read_csv("data/learning2014.csv")
+dim(learning2014)
+# the data has 166 rows, 7 columns of variables for each row.
+str(learning2014)
+# ... the variables are as listed by the above function, with gender being of chr type, rest numeric.
+```
+The data is study methods survey data from a survey conducted in 2014. It has been summarised above, with various categories given mean score of wider variety of data points for each respondent.
+
+*Show a graphical overview of the data and show summaries of the variables in the data. Describe and interpret the outputs, commenting on the distributions of the variables and the relationships between them. (0-3 points)*
+
+```{r}
+library(GGally)
+library(ggplot2)
+
+p <- ggpairs(learning2014, mapping = aes(col = gender), lower = list(combo = wrap("facethist", bins = 20)))
+p
+
+qplot(attitude, points, data = learning2014) + geom_smooth(method = "lm")
+qplot(stra, points, data = learning2014) + geom_smooth(method = "lm")
+qplot(surf, points, data = learning2014) + geom_smooth(method = "lm")
+
 ```
 
-Here we go again...
+The function produces a really nice overview easily. I wonder if it is that easy without so fitting data. Some variables seem to correlate strongly with points, especially attitude. There's also something curious going on between surface and deep learning methods. Males seem to have a strong inverse correlation there, while females do not. The sample has female respondents over represented though. Maybe male respondents either employ deep or surface methods, and female respondents might employ both.
+
+
+*Choose three variables as explanatory variables and fit a regression model where exam points is the target (dependent, outcome) variable. Show a summary of the fitted model and comment and interpret the results. Explain and interpret the statistical test related to the model parameters. If an explanatory variable in your model does not have a statistically significant relationship with the target variable, remove the variable from the model and fit the model again without it. (0-4 points)*
+
+
+```{r}
+# fit a linear model
+p_surf_model3 <- lm(points ~ attitude + stra + surf, data = learning2014)
+summary(p_surf_model3)
+
+p_model1 <- lm(points ~ attitude, data = learning2014)
+summary(p_model1)
+
+
+```
+Neither 'stra' nor 'surf' seem to be statistically significant. At least if I got this right. It looks like the results are roughly the same without those two, as with them. 'attitude' is te sole significant variable when testing effects on 'points'.
+
+*Using a summary of your fitted model, explain the relationship between the chosen explanatory variables and the target variable (interpret the model parameters). Explain and interpret the multiple R-squared of the model. (0-3 points)*
+
+```{r}
+p_att_model <- lm(points ~ attitude, data = learning2014)
+summary(p_att_model)
+```
+The model based on attitude explains ~19% of the variability in points. That's the strongest, and almost sole variable having a significant effect on points. Adding in stra and surf did raise multiple R-squared a hair, but adding all three already made adjusted R-squared drop a bit. My understanding is that this might then not be helpful, as that would needlessly complicate the model.
+
+*Produce the following diagnostic plots: Residuals vs Fitted values, Normal QQ-plot and Residuals vs Leverage. Explain the assumptions of the model and interpret the validity of those assumptions based on the diagnostic plots. (0-3 points)*
+
+```{r}
+plot(p_att_model, which = c(1,2,5))
+```
+The material states that linear regression modelling has four main assumptions:
+
+1. Linear relationship between predictors and outcome;
+2. Independence of residuals;
+3. Normal distribution of residuals;
+4. Equal variance of residuals.
+
+
+Residuals vs fitted - The residuals seem to show a normal distribution with a fit of zero, as they should.
+
+Normal QQ-plot - The residuals seem to diverge from a straight line here a bit at the start ansd end. That might be alarming? But is it enough? I'm not sure I'm yet qualified to answer.
+
+Residuals vs leverage - All the observations fall within Cook's distance, so there are no especially influential observations skewing the results.
