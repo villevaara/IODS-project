@@ -1,0 +1,107 @@
+# Week 3 exercises
+
+## Data
+
+```{r}
+library(readr)
+alc <- read_csv("data/alc.csv")
+dim(alc)
+str(alc)
+colnames(alc)
+# ... the variables are as listed by the above function, with gender being of chr type, rest numeric.
+```
+The data in 'alc' describes questionnaire data on students in two Portuguese schools. It has student metadata, and details on their school performance and alcohol consumption.
+
+The purpose of your analysis is to study the relationships between high/low alcohol consumption and some of the other variables in the data. To do this, choose 4 interesting variables in the data and for each of them, present your personal hypothesis about their relationships with alcohol consumption. (0-1 point)
+
+## Hypothesis
+
+1. High alcohol usage probably correlates with number of absences.
+2. Volume of alcohol usage is likely strongly gendered.
+3. High alcohol usage probably weakly inversely correlates with 'G3' (final year grade).
+4. High alcohol usage likely correlates with going out with friends ('goout').
+
+## Data exploration
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+alc_subset = select(alc, c('alc_use', 'high_use', 'sex', 'goout', 'G3', 'absences'))
+
+gather(alc_subset) %>% glimpse()
+
+gather(alc_subset) %>% View()
+
+gather(alc_subset) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar()
+```
+
+Absences and G3 score seem to have high numbers in both ends of the scale. Absences also has a strange peak in the middle, which might be an artifact of school practices. Maybe X amount of absences either automatically disqualifies one from the class, or X amount is the maximum permitted amount. Alcohol use is weighted towards the lower end of the scale, out-goingness is somewhat normally distributed and male:female ratio is close to 1:1.
+
+```{r}
+library(dplyr)
+alc_subset %>% group_by(sex, high_use) %>% summarise(count = n())
+```
+
+Males are somewhat over represented in the high alcohol usage group, as hypothesised.
+
+```{r}
+alc_subset %>% group_by(sex, high_use) %>% summarise(count = n(), mean_grade = mean(G3))
+
+```
+
+High alcohol use seems to somewhat lower the grades in males, but not in females.
+
+```{r}
+# Some of the exercise code fit with my hypothesis nicely...
+g1 <- ggplot(alc, aes(x = high_use, y = G3))
+g1 + geom_boxplot(aes(col = sex)) + ylab("grade")
+```
+
+And the same can be seen from the above plot.
+
+```{r}
+alc_subset %>% group_by(high_use) %>% summarise(mean_goout = mean(goout))
+
+```
+Going out seems to quite clearly correlate with high alcohol usage, as was the hypothesis.
+
+```{r}
+alc_subset %>% group_by(high_use) %>% summarise(mean_absences = mean(absences))
+```
+
+And alcohol use and absences correlate.
+
+```{r}
+g2 <- ggplot(alc, aes(x = high_use, y = absences))
+g2 + geom_boxplot(aes(col = sex)) + ylab("absences") +
+  ggtitle("Student absences by alcohol consumption and sex")
+```
+But gender doesn't seem to make a huge difference here. Still, alhocol use in males does correlate with absences more clearly.
+
+## Logistical regression models
+
+```{r}
+m <- glm(high_use ~ absences + goout + sex + G3, data = alc_subset, family = "binomial")
+summary(m)
+```
+absences, goout, and gender all strongly correlate with high_use, as demonstrated by the low p-scores, but G3 clearly does not. So, let's drop G3 from the model:
+
+```{r}
+m <- glm(high_use ~ absences + goout + sex, data = alc_subset, family = "binomial")
+summary(m)
+```
+And add coefficients and confidence intervals:
+
+```{r}
+OR <- coef(m) %>% exp
+CI <- confint(m) %>% exp()
+cbind(OR, CI)
+```
+Alcohol consumption seem to here have a significantly lower effect on on absences, than how the results earlier seemed. Apparently both male gender and goout would already serve to explain majority of the effect covered by absences?
+
+## Cross tabulation
+
+Using the variables which, according to your logistic regression model, had a statistical relationship with high/low alcohol consumption, explore the predictive power of you model. Provide a 2x2 cross tabulation of predictions versus the actual values and optionally display a graphic visualizing both the actual values and the predictions. Compute the total proportion of inaccurately classified individuals (= the training error) and comment on all the results. Compare the performance of the model with performance achieved by some simple guessing strategy. (0-3 points)
+
+Let's see if I have time for this ...
