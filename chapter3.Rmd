@@ -54,7 +54,7 @@ High alcohol use seems to somewhat lower the grades in males, but not in females
 
 ```{r}
 # Some of the exercise code fit with my hypothesis nicely...
-g1 <- ggplot(alc, aes(x = high_use, y = G3))
+g1 <- ggplot(alc_subset, aes(x = high_use, y = G3))
 g1 + geom_boxplot(aes(col = sex)) + ylab("grade")
 ```
 
@@ -73,7 +73,7 @@ alc_subset %>% group_by(high_use) %>% summarise(mean_absences = mean(absences))
 And alcohol use and absences correlate.
 
 ```{r}
-g2 <- ggplot(alc, aes(x = high_use, y = absences))
+g2 <- ggplot(alc_subset, aes(x = high_use, y = absences))
 g2 + geom_boxplot(aes(col = sex)) + ylab("absences") +
   ggtitle("Student absences by alcohol consumption and sex")
 ```
@@ -98,10 +98,40 @@ OR <- coef(m) %>% exp
 CI <- confint(m) %>% exp()
 cbind(OR, CI)
 ```
-Alcohol consumption seem to here have a significantly lower effect on on absences, than how the results earlier seemed. Apparently both male gender and goout would already serve to explain majority of the effect covered by absences?
+Alcohol consumption seem to here have a significantly lower effect on on absences, than how the results earlier seemed. But the scale for absences is a lot more granular than for the other variables here, so that might have an effect? Or maybe the effect isn't as pronounced as on the other variables. There's roughly 50% chance (1:1 odds) that there's a unit change in absences if alcohol consumption state flips from high to low. For gender that chance is ~75% (2.78:1) and ~65% chance for out-goingness.
 
-## Cross tabulation
+## Cross tabulation of predictions
 
-Using the variables which, according to your logistic regression model, had a statistical relationship with high/low alcohol consumption, explore the predictive power of you model. Provide a 2x2 cross tabulation of predictions versus the actual values and optionally display a graphic visualizing both the actual values and the predictions. Compute the total proportion of inaccurately classified individuals (= the training error) and comment on all the results. Compare the performance of the model with performance achieved by some simple guessing strategy. (0-3 points)
+```{r}
+probabilities <- predict(m, type = "response")
+alc_subset <- mutate(alc_subset, probability = probabilities)
+alc_subset <- mutate(alc_subset, prediction = probability > 0.5)
+raw_num <- table(high_use = alc_subset$high_use, prediction = alc_subset$prediction)
+raw_num
+table(high_use = alc_subset$high_use, prediction = alc_subset$prediction) %>%
+  prop.table() %>%
+  addmargins()
 
-Let's see if I have time for this ...
+precision <- raw_num[2,2]/sum(raw_num[,2])
+precision
+
+recall <- raw_num[2,2]/sum(raw_num[2,])
+recall
+```
+The model doesn't seem that great. Precision was *~75%*, that is only 3/4 of the positive predictions were accurate. Recall is *~45%*, so more than half of actual high_use cases were undetected.
+
+```{r}
+1 - (sum(alc_subset$high_use == alc_subset$prediction) / nrow(alc_subset))
+```
+Total proportion of inaccurate classifications is *~21%*. That's not too great a result. Seems like alcohol consumption does not explain all other behaviour, but still a surprisingly high number of predictions are correct. The relatively good result is probably because the model seems to err on the side of not high use, and as that is the more likely result the number of accurate predictions is misleadingly high. Precision and recall, (which were not great) are probably better indicators.
+
+If we try predicting with the three variables we decided were significant, by predicting high alcohol consumption if at least two of the three are on the side of the indicator favoring high alcohol consumption, the results look like this:
+
+```{r}
+alc_subset$goout_guess <- alc_subset$goout > mean(alc_subset$goout)
+alc_subset$abs_guess <- alc_subset$absences > mean(alc_subset$absences)
+alc_subset$gender_guess <- alc_subset$sex == "M"
+alc_subset$ultimate_guess <- (alc_subset$abs_guess + alc_subset$goout_guess + alc_subset$gender_guess) >= 2
+1 - (sum(alc_subset$high_use == alc_subset$ultimate_guess) / nrow(alc_subset))
+```
+We got 28% wrong, which is a bit higher than the model's 21%, but not that high. I wouldn't base students' alcoholism intervention program on either.
