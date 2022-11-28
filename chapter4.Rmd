@@ -1,0 +1,54 @@
+# Week 4 exercises
+
+Sorry, didn't have time to finish these this week! I did a few of the starting points, and will finalize these later.
+
+## The Boston dataset
+
+```{r}
+library(MASS)
+data("Boston")
+str(Boston)
+dim(Boston)
+summary(Boston)
+```
+
+The dataset has various socio-political data of Boston suburbs. The data varies from crime rates to property values and student/teacher ratios in schools.
+
+## Dataset summary
+
+```{r}
+library(tidyr)
+library(corrplot)
+library(ggplot2)
+library(GGally)
+
+cor_matrix <- cor(Boston) %>% round(2) 
+cor_matrix 
+
+ggpairs(Boston)
+
+corrplot(cor_matrix, method="circle", type="upper")
+
+
+Boston %>% ggplot(aes(indus)) +
+  geom_histogram(binwidth = 1) + 
+  ylab("Industry ratio")
+
+Boston %>% ggplot(aes(rad)) +
+  geom_histogram(binwidth = 1) + 
+  ylab("Radial highway access")
+
+Boston %>% ggplot(aes(tax)) +
+  geom_histogram(binwidth = 20) +
+  ylab("Property tax rate")
+
+Boston %>% ggplot(aes(age)) +
+  geom_histogram(binwidth = 10) +
+  ylab("Building age")
+
+
+
+```
+Few variables have a very strongly stratified scope. Some suburbs have very high values, most others very low. See for example crime rate (crim), river proximity (chas) and proportion of people of colour of the residents (black).
+
+Industry rate seems to correlate (nagatively or positively) strongly with many of the other variables in the dataset. The histograms of the correlating variables vary in shape quite widely, so probably there's quite a bit of variance in suburbs on these.
