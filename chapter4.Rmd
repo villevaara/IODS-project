@@ -68,7 +68,8 @@ crime <- cut(boston_scaled$crim, breaks = quantile(boston_scaled$crim), include.
 boston_scaled$crim <- crime
 
 # Create test and train datasets
-ind <- sample(nrow(boston_scaled),  size = n * 0.8)
+n <- nrow(boston_scaled)
+ind <- sample(n,  size = n * 0.8)
 train <- boston_scaled[ind,]
 test <- boston_scaled[-ind,]
 ```
