@@ -162,13 +162,13 @@ Hint:
 boston_scaled <- scale(Boston)
 
 # summaries of the scaled variables
-
+summary(boston_scaled)
 
 # class of the boston_scaled object
 class(boston_scaled)
 
 # change the object to data frame
-
+boston_scaled <- boston_scaled %>% as.data.frame()
 
 ```
 
@@ -218,7 +218,8 @@ bins <- quantile(boston_scaled$crim)
 bins
 
 # create a categorical variable 'crime'
-crime <- cut(boston_scaled$crim, breaks = "change me!", include.lowest = TRUE)
+crime <- cut(boston_scaled$crim, breaks = bins, include.lowest = TRUE,
+             labels = c("low", "med_low", "med_high", "high"))
 
 # look at the table of the new factor crime
 
@@ -270,7 +271,7 @@ Hints:
 # boston_scaled is available
 
 # number of rows in the Boston dataset 
-n <- "change me!"
+n <- nrow(boston_scaled)
 
 # choose randomly 80% of the rows
 ind <- sample(n,  size = n * 0.8)
@@ -334,7 +335,7 @@ Hints:
 # data train is available
 
 # linear discriminant analysis
-lda.fit <- lda("change me!", data = train)
+lda.fit <- lda(crime ~ ., data = train)
 
 # print the lda.fit object
 lda.fit
@@ -353,7 +354,7 @@ lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0
 classes <- as.numeric(train$crime)
 
 # plot the lda results
-plot("change me!", dimen = 2)
+plot(lda.fit, dimen = 2, col = classes, pch = classes)
 lda.arrows(lda.fit, myscale = 1)
 
 ```
@@ -397,7 +398,7 @@ Hints:
 # lda.fit, correct_classes and test are available
 
 # predict classes with test data
-lda.pred <- predict(lda.fit, newdata = "change me!")
+lda.pred <- predict(lda.fit, newdata = test)
 
 # cross tabulate the results
 table(correct = "change me!", predicted = "change me!")
