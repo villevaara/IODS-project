@@ -1,0 +1,110 @@
+# Data summary
+
+```{r}
+human <- read.table(file = "data/human.csv", row.names = 1, sep = ",", header = TRUE)
+summary(human)
+```
+
+```{r}
+library(tidyr)
+library(corrplot)
+library(ggplot2)
+library(GGally)
+
+cor_matrix <- cor(human) %>% round(2) 
+cor_matrix 
+
+ggpairs(human)
+
+corrplot(cor_matrix, method="circle", type="upper")
+```
+
+There's quite strong correlation between many of the variables in the data. Distributions vary, but often the shapes of the distribution historgrams are similar- for example between Mat.Mor and GNI, or between Labo.FM, Edu.Exp and Life.Exp.
+
+For refenrece, the data description from https://github.com/KimmoVehkalahti/Helsinki-Open-Data-Science/blob/master/datasets/human_meta.txt :
+
+## Health and knowledge
+
+"GNI" = Gross National Income per capita
+"Life.Exp" = Life expectancy at birth
+"Edu.Exp" = Expected years of schooling 
+"Mat.Mor" = Maternal mortality ratio
+"Ado.Birth" = Adolescent birth rate
+
+## Empowerment
+
+"Parli.F" = Percetange of female representatives in parliament
+"Edu2.F" = Proportion of females with at least secondary education
+"Edu2.M" = Proportion of males with at least secondary education
+"Labo.F" = Proportion of females in the labour force
+"Labo.M" " Proportion of males in the labour force
+
+"Edu2.FM" = Edu2.F / Edu2.M
+"Labo.FM" = Labo2.F / Labo2.M
+
+# PCA
+
+## raw data
+
+Perform principal component analysis (PCA) on the raw (non-standardized) human data. Show the variability captured by the principal components. Draw a biplot displaying the observations by the first two principal components (PC1 coordinate in x-axis, PC2 coordinate in y-axis), along with arrows representing the original variables. (0-2 points)
+
+```{r}
+pca_human <- prcomp(human)
+pca_human
+summary(pca_human)
+
+biplot(pca_human, choices = 1:2, col = c("grey40", "deeppink2"), cex = c(0.8, 1))
+```
+
+## standardized data
+
+```{r}
+human_std <- scale(human)
+pca_human_std <- prcomp(human_std)
+pca_human_std
+summary(pca_human_std)
+biplot(pca_human_std, choices = 1:2, col = c("grey40", "deeppink2"))
+
+```
+
+Standardizing the variables brought their properties in the PCA much closer together. The plot of the non-standardized PCA is almost unreadable- the only variable that stands out is GNI, and that should follow from the fact that the absolute values there are way higher than in the other variables.
+
+In the standardized version, few clear directions are discernible. Maternal mortality ratio and Adolescent birth rate clearly have similar pull, both related to births. The gender balance in labour and percentage of female representatives in parliament also have an effect in the same direction. Rest of the variables (GNI, Life expectancy at birth, Expected years of schooling and gender balance in secondary education) all form a third group.
+
+PC2 creates an axis, along which the variables connected with birth (maternal mortality and adolescence birth rate) and the other group connected with more general metrics for quality of life (GNI, Life expectancy at birth, Expected years of schooling) and gender balance in secondary education form opposite poles. This makes sense, as the first group would strongly correlate with large portion of the population living in poor conditions, and high GNI, etc would on the other hand correlate with relatively properous societies.
+
+PC1 is more connected with gender equality, and does not seem to directly correlate with high GNI, but there the two variables (gender balance in parliament and in work force) are less strongly correlated than in the other groupings. This might make sense- you could have a relatively conservative and low income society where women are employed in relatively low status jobs, but required to work still as the total income of the economic unit would otherwise be too low. Parliamentary representation on the other hand correlates more with general indicators of wealth (GNI, etc.), and this would indicate that a more equal societies in terms of power relations are more often also more prosperous.
+
+# Tea
+
+```{r}
+tea <- read.csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/tea.csv", stringsAsFactors = TRUE)
+dim(tea)
+str(tea)
+
+ggpairs(tea[,c("age", "how", "where")])
+
+ggplot(gather(tea), aes(value)) + 
+    geom_histogram(stat="count") + 
+    facet_wrap(~key, scales = 'free_x')
+```
+Did have a quick look at some selected correlations with ggpairs. Also histograms of all the columns. 
+
+```{r}
+tea_subset <- tea[,c("spirituality", "healthy", "friendliness", "relaxing", "sophisticated", "exciting", "feminine")]
+tea_subset$healthy <- relevel(tea_subset$healthy, "Not.healthy") 
+tea_subset$friendliness <- relevel(tea_subset$friendliness, "Not.friendliness") 
+tea_subset$exciting <- relevel(tea_subset$exciting, "No.exciting") 
+tea_subset$feminine <- relevel(tea_subset$feminine, "Not.feminine") 
+
+library(FactoMineR)
+mca <- MCA(tea_subset, graph = FALSE)
+
+# summary of the model
+summary(mca)
+
+# visualize MCA
+plot(mca, invisible=c("ind"), graph.type = "classic")
+```
+Looks like Dim2 reveals, that there's a tendency among the respondents to either assign multiple attributes to tea, or not assign any. Dim 1 reveals that exciting and 'not relaxing' are paired, and the other way round. Rest of the attributes have less strong associations with other attributes, but there are certain groupings: sophistication, femininess and spiritulaity are grouping close to each other, as well as not-friendliness and unsophistication.
+
