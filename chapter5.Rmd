@@ -1,4 +1,6 @@
-# Data summary
+# Week 5 exercises
+
+## Data summary
 
 ```{r}
 human <- read.table(file = "data/human.csv", row.names = 1, sep = ",", header = TRUE)
@@ -23,7 +25,7 @@ There's quite strong correlation between many of the variables in the data. Dist
 
 For refenrece, the data description from https://github.com/KimmoVehkalahti/Helsinki-Open-Data-Science/blob/master/datasets/human_meta.txt :
 
-## Health and knowledge
+### Health and knowledge
 
 "GNI" = Gross National Income per capita
 "Life.Exp" = Life expectancy at birth
@@ -31,7 +33,7 @@ For refenrece, the data description from https://github.com/KimmoVehkalahti/Hels
 "Mat.Mor" = Maternal mortality ratio
 "Ado.Birth" = Adolescent birth rate
 
-## Empowerment
+### Empowerment
 
 "Parli.F" = Percetange of female representatives in parliament
 "Edu2.F" = Proportion of females with at least secondary education
@@ -42,9 +44,9 @@ For refenrece, the data description from https://github.com/KimmoVehkalahti/Hels
 "Edu2.FM" = Edu2.F / Edu2.M
 "Labo.FM" = Labo2.F / Labo2.M
 
-# PCA
+## PCA
 
-## raw data
+### raw data
 
 Perform principal component analysis (PCA) on the raw (non-standardized) human data. Show the variability captured by the principal components. Draw a biplot displaying the observations by the first two principal components (PC1 coordinate in x-axis, PC2 coordinate in y-axis), along with arrows representing the original variables. (0-2 points)
 
@@ -56,7 +58,7 @@ summary(pca_human)
 biplot(pca_human, choices = 1:2, col = c("grey40", "deeppink2"), cex = c(0.8, 1))
 ```
 
-## standardized data
+### standardized data
 
 ```{r}
 human_std <- scale(human)
@@ -75,7 +77,7 @@ PC2 creates an axis, along which the variables connected with birth (maternal mo
 
 PC1 is more connected with gender equality, and does not seem to directly correlate with high GNI, but there the two variables (gender balance in parliament and in work force) are less strongly correlated than in the other groupings. This might make sense- you could have a relatively conservative and low income society where women are employed in relatively low status jobs, but required to work still as the total income of the economic unit would otherwise be too low. Parliamentary representation on the other hand correlates more with general indicators of wealth (GNI, etc.), and this would indicate that a more equal societies in terms of power relations are more often also more prosperous.
 
-# Tea
+## Tea
 
 ```{r}
 tea <- read.csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/tea.csv", stringsAsFactors = TRUE)
