@@ -174,4 +174,30 @@ summary(BPRS_ref1)
 anova(BPRS_ref1, BPRS_ref)
 ```
 
-And the two models compared...
+And the two models compared.
+
+### Random Intercept and Random Slope Model with interaction
+
+```{r}
+BPRS_ref2 <- lmer(bprs ~ week * treatment + (week | subject), data = BPRS, REML = FALSE)
+
+# print a summary of the model
+summary(BPRS_ref2)
+
+# perform an ANOVA test on the two models
+anova(BPRS_ref2, BPRS_ref1)
+
+# Create a vector of the fitted values
+Fitted <- fitted(BPRS_ref2)
+
+# Create a new column fitted to RATSL
+BPRS <- BPRS %>% mutate(Fitted)
+
+ggplot(BPRS, aes(x = week, y = Fitted, group = subject, colour = subject)) +
+  geom_line(aes(linetype = subject)) +
+  scale_x_continuous(name = "Time (weeks)", breaks = seq(0, 60, 10)) +
+  scale_y_continuous(name = "Fitted BPRS") +
+  theme(legend.position = "top") +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  scale_linetype_manual(values = rep(1:10, times=4))
+```
