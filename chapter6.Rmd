@@ -1,0 +1,129 @@
+# Week 6 exercises
+
+Couldn't finish these in time. Apologies to whoever is checking this.
+
+```{r}
+RATS <- read.table(file = "data/rats.csv", sep = ",", header = TRUE)
+RATS$ID <- factor(RATS$ID)
+RATS$Group <- factor(RATS$Group)
+
+BPRS <- read.table(file = "data/bprs.csv", sep = ",", header = TRUE)
+BPRS$treatment <- factor(BPRS$treatment) 
+BPRS$subject <- factor(BPRS$subject) 
+```
+
+## Overview of RATS
+
+```{r}
+library(ggplot2)
+
+# Draw the plot
+ggplot(RATS, aes(x = Time, y = weight, color = ID, linetype = ID)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ Group, labeller = label_both) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(limits = c(min(RATS$weight), max(RATS$weight)))
+```
+Might have made more sense to have them all in one graph, with linetype = Group instead of ID.
+
+
+```{r}
+library(dplyr)
+library(tidyr)
+
+RATS <- RATS %>%
+  group_by(Time) %>%
+  mutate(stdweight = (weight - mean(weight))/ sd(weight)) %>%
+  ungroup()
+
+# Plot again with the standardized
+ggplot(RATS, aes(x = Time, y = stdweight, color = ID, linetype = ID)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:16, times=4)) +
+  facet_grid(. ~ Group, labeller = label_both) +
+  scale_y_continuous(name = "standardized bprs")
+
+```
+Standardized version.
+
+## Summary of rat weights per week
+
+```{r}
+n <- 16
+
+# Summary data with mean and standard error of weight by treatment and week 
+RATSS <- RATS %>%
+  group_by(Group, Time) %>%
+  summarise(mean = mean(weight), se = sd(weight)/n ) %>%
+  ungroup()
+
+# Plot the mean profiles
+library(ggplot2)
+ggplot(RATSS, aes(x = Time, y = mean, linetype = Group, shape = Group)) +
+  geom_line() +
+  scale_linetype_manual(values = c(1,2,3)) +
+  geom_point(size=3) +
+  scale_shape_manual(values = c(1,2,3)) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, linetype="1"), width=0.3) +
+  theme(legend.position = c(0.9,0.5)) +
+  scale_y_continuous(name = "mean(weight) +/- se(weight)")
+
+```
+
+And mean weights:
+
+```{r}
+RATS8S <- RATS %>%
+  group_by(Group, ID) %>%
+  summarise(mean=mean(weight)) %>%
+  ungroup()
+
+library(ggplot2)
+ggplot(RATS8S, aes(x = Group, y = mean)) +
+  geom_boxplot() +
+  stat_summary(fun = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(weight)")
+```
+
+Had to filter outliers from each Group of rats separately.
+
+```{r}
+RATS8S_filtered <- RATS8S %>% filter(!(Group == 1 & mean < 250) &
+                                     !(Group == 2 & mean > 550) &
+                                     !(Group == 3 & mean < 500))
+
+ggplot(RATS8S_filtered, aes(x = Group, y = mean)) +
+  geom_boxplot() +
+  stat_summary(fun = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(bprs), weeks 1-8")
+```
+
+... and the groupings are very tight as a results of filtering. I wonder if it did really make sense?
+
+## T-test, Anova
+
+t-test only makes sense pairwise, so we'll filter for groups. Could make a t-test of group 1 vs group 3 too, but that'd show even more obvious significance than these tests. 
+
+```{r}
+RATS12 <- RATS8S_filtered %>% filter(Group == 1 | Group == 2)
+t.test(mean ~ Group, data = RATS12, var.equal = TRUE)
+
+RATS23 <- RATS8S_filtered %>% filter(Group == 2 | Group == 3)
+t.test(mean ~ Group, data = RATS23, var.equal = TRUE)
+
+# Add the baseline from the original data as a new variable to the summary data
+RATS_bl <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/rats.txt", header = TRUE, sep = '\t')
+
+
+RATS8S_non_filtered <- RATS8S %>% mutate(baseline = RATS_bl$WD1)
+
+# Fit the linear model with the mean as the response 
+fit <- lm(mean ~ baseline + Group, data = RATS8S_non_filtered)
+
+# Compute the analysis of variance table for the fitted model with anova()
+anova(fit)
+
+```
+Looks like Group matters, as was evident from the graphs too... but it was practically all determined by the baseline. The p-value of 0.07 for 'Group' barely registers as signifying at all.
+
