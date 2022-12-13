@@ -2,17 +2,15 @@
 
 Couldn't finish these in time. Apologies to whoever is checking this.
 
+
+## RATS
+
 ```{r}
 RATS <- read.table(file = "data/rats.csv", sep = ",", header = TRUE)
 RATS$ID <- factor(RATS$ID)
 RATS$Group <- factor(RATS$Group)
-
-BPRS <- read.table(file = "data/bprs.csv", sep = ",", header = TRUE)
-BPRS$treatment <- factor(BPRS$treatment) 
-BPRS$subject <- factor(BPRS$subject) 
 ```
 
-## Overview of RATS
 
 ```{r}
 library(ggplot2)
@@ -47,7 +45,7 @@ ggplot(RATS, aes(x = Time, y = stdweight, color = ID, linetype = ID)) +
 ```
 Standardized version.
 
-## Summary of rat weights per week
+### Summary of rat weights per week
 
 ```{r}
 n <- 16
@@ -101,7 +99,7 @@ ggplot(RATS8S_filtered, aes(x = Group, y = mean)) +
 
 ... and the groupings are very tight as a results of filtering. I wonder if it did really make sense?
 
-## T-test, Anova
+### T-test, Anova
 
 t-test only makes sense pairwise, so we'll filter for groups. Could make a t-test of group 1 vs group 3 too, but that'd show even more obvious significance than these tests. 
 
@@ -127,3 +125,53 @@ anova(fit)
 ```
 Looks like Group matters, as was evident from the graphs too... but it was practically all determined by the baseline. The p-value of 0.07 for 'Group' barely registers as signifying at all.
 
+
+## BPRS
+
+Morning sprint, let's see how far I can get ...
+
+```{r}
+BPRS <- read.table(file = "data/bprs.csv", sep = ",", header = TRUE)
+BPRS$treatment <- factor(BPRS$treatment) 
+BPRS$subject <- factor(BPRS$subject)
+```
+
+### BPRS overview
+
+```{r}
+ggplot(BPRS, aes(x = week, y = bprs, group = subject, colour = subject)) +
+  geom_line(aes(linetype = subject)) +
+  scale_x_continuous(name = "Time (weeks)", breaks = seq(0, 60, 10)) +
+  scale_y_continuous(name = "BPRS") +
+  theme(legend.position = "top") +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  scale_linetype_manual(values = rep(1:10, times=4))
+
+```
+
+### Regression model
+
+```{r}
+BPRS_reg <- lm(bprs ~ week + treatment, BPRS)
+summary(BPRS_reg)
+```
+
+Based on the p-values, looks like week seems very significant here, and treatment makes no difference. An argument for the benefits of institutionalization no doubt.
+
+### Random Intercept Model
+
+```{r}
+library(lme4)
+BPRS_ref <- lmer(bprs ~ week + treatment + (1 | subject), data = BPRS, REML = FALSE)
+summary(BPRS_ref)
+```
+I have to confess I fell off the cart / didn't have time to properly study the materials for the interpretation of this one. 
+
+```{r}
+BPRS_ref1 <- lmer(bprs ~ week + treatment + (week | subject), data = BPRS, REML = FALSE)
+
+summary(BPRS_ref1)
+anova(BPRS_ref1, BPRS_ref)
+```
+
+And the two models compared...
